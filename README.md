@@ -1,0 +1,193 @@
+# Todo Application
+
+A simple and efficient Todo application built with Go and MongoDB, featuring a RESTful API and web interface.
+
+## Features
+
+- ✅ Create, read, update, and delete todos
+- 🗄️ MongoDB integration for persistent storage
+- 🌐 RESTful API endpoints
+- 📱 Web interface with HTML templates
+- ⚡ Fast and lightweight Go backend
+- 🔧 Graceful server shutdown
+- 🎯 Input validation
+
+## Prerequisites
+
+Before running this application, make sure you have:
+
+- **Go 1.16+** installed
+- **MongoDB** running on port 27017 (default)
+
+## Installation
+
+1. Clone or download the project:
+   ```bash
+   git clone <repository-url>
+   cd go
+   ```
+
+2. Install dependencies:
+   ```bash
+   go mod download
+   ```
+
+## Running the Application
+
+### Method 1: Run directly from source
+```bash
+go run main.go
+```
+
+### Method 2: Build and run executable
+```bash
+# Build the application
+go build -o todo.exe main.go
+
+# Run the executable
+./todo.exe
+```
+
+The application will start on port **9000** by default.
+
+## Configuration
+
+### MongoDB Connection
+By default, the application connects to MongoDB at `mongodb://localhost:27017`. You can override this by setting the `MONGO_URL` environment variable:
+
+```bash
+# Windows (PowerShell)
+$env:MONGO_URL="mongodb://your-mongodb-url"
+
+# Windows (Command Prompt)
+set MONGO_URL=mongodb://your-mongodb-url
+
+# Linux/MacOS
+export MONGO_URL="mongodb://your-mongodb-url"
+```
+
+## API Endpoints
+
+The application provides the following RESTful API endpoints:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/` | Home page |
+| GET | `/todo/` | Get all todos |
+| POST | `/todo/` | Create a new todo |
+| PUT | `/todo/{id}` | Update an existing todo |
+| DELETE | `/todo/{id}` | Delete a todo |
+
+### API Examples
+
+#### Create a Todo
+```bash
+curl -X POST http://localhost:9000/todo/ \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Learn Go programming"}'
+```
+
+#### Get All Todos
+```bash
+curl http://localhost:9000/todo/
+```
+
+#### Update a Todo
+```bash
+curl -X PUT http://localhost:9000/todo/{id} \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Learn Go programming", "completed": true}'
+```
+
+#### Delete a Todo
+```bash
+curl -X DELETE http://localhost:9000/todo/{id}
+```
+
+## Project Structure
+
+```
+├── main.go          # Main application file
+├── go.mod           # Go module dependencies
+├── go.sum           # Dependency checksums
+├── README.md        # Project documentation
+├── todo.exe         # Compiled executable (Windows)
+└── static/
+    └── home.tpl     # HTML template for home page
+```
+
+## Data Model
+
+### Todo Structure
+```json
+{
+  "id": "string",
+  "title": "string",
+  "completed": boolean,
+  "created_at": "datetime"
+}
+```
+
+## Dependencies
+
+- **Chi Router** (`github.com/go-chi/chi`) - HTTP router and URL matcher
+- **Renderer** (`github.com/thedevsaddam/renderer`) - Template rendering
+- **MongoDB Driver** (`go.mongodb.org/mongo-driver`) - MongoDB client
+
+## Database
+
+The application uses MongoDB with the following configuration:
+- **Database Name**: `demo_todo`
+- **Collection Name**: `todo`
+- **Default Port**: `27017`
+
+## Development
+
+### Building for Production
+```bash
+# Build for current platform
+go build -o todo main.go
+
+# Build for Windows
+GOOS=windows GOARCH=amd64 go build -o todo.exe main.go
+
+# Build for Linux
+GOOS=linux GOARCH=amd64 go build -o todo main.go
+```
+
+### Running Tests
+```bash
+go test ./...
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Port 9000 already in use**
+   - Stop any running instances: `taskkill /f /im todo.exe`
+   - Or change the port in `main.go`
+
+2. **Cannot connect to MongoDB**
+   - Ensure MongoDB is running: `net start MongoDB`
+   - Check MongoDB is listening on port 27017: `netstat -an | findstr 27017`
+
+3. **Module not found errors**
+   - Run: `go mod download`
+   - Ensure Go modules are enabled: `go env GO111MODULE`
+
+## Author
+
+Built with ❤️ using Go and MongoDB
