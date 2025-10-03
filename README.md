@@ -4,7 +4,10 @@ A simple and efficient Todo application built with Go and MongoDB, featuring a R
 
 ## Features
 
-- ✅ Create, read, update, and delete todos
+- ✅ Create, read, update, and delete todos (CRUD)
+- 🔍 **Advanced Filtering** - Filter by completion status and search text
+- 📊 **Sorting** - Sort by title, created_at, or completed status (asc/desc)
+- 📄 **Pagination** - Page through results with metadata
 - 🗄️ MongoDB integration for persistent storage
 - 🌐 RESTful API endpoints
 - 📱 Web interface with HTML templates
@@ -92,6 +95,24 @@ curl -X POST http://localhost:9000/todo/ \
 curl http://localhost:9000/todo/
 ```
 
+#### Advanced Query Examples
+```bash
+# Filter by completion status
+curl "http://localhost:9000/todo/?completed=true"
+
+# Search in titles
+curl "http://localhost:9000/todo/?search=work"
+
+# Sort by title (ascending)
+curl "http://localhost:9000/todo/?sort_by=title&order=asc"
+
+# Pagination
+curl "http://localhost:9000/todo/?page=1&page_size=5"
+
+# Combined filters
+curl "http://localhost:9000/todo/?completed=false&sort_by=created_at&order=desc&page=1&page_size=10"
+```
+
 #### Update a Todo
 ```bash
 curl -X PUT http://localhost:9000/todo/{id} \
@@ -108,10 +129,15 @@ curl -X DELETE http://localhost:9000/todo/{id}
 
 ```
 ├── main.go          # Main application file
-├── go.mod           # Go module dependencies
+├── go.mod           # Go module dependencies  
 ├── go.sum           # Dependency checksums
 ├── README.md        # Project documentation
-├── todo.exe         # Compiled executable (Windows)
+├── models/
+│   └── todo.go      # Data structures
+├── handlers/
+│   └── todo.go      # HTTP request handlers
+├── routes/
+│   └── todo.go      # URL routing
 └── static/
     └── home.tpl     # HTML template for home page
 ```
