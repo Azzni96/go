@@ -241,17 +241,19 @@
         })
         .then(response => response.json())
         .then(data => {
-          if (data.todo_id) {
-            todos.push({
-              id: data.todo_id,
-              title: title,
-              completed: false
-            });
+          if (data.todo_id && data.todo) {
+            // Add the new todo to local array
+            todos.push(data.todo);
             renderTodos();
+            document.querySelector('.todo-input').value = ''; // Clear input
+            console.log('Todo added successfully!');
+          } else {
+            console.error('Invalid response format:', data);
           }
         })
         .catch(error => {
           console.error('Error adding todo:', error);
+          alert('Virhe lisättäessä todoa. Yritä uudelleen.');
         });
       }
       
