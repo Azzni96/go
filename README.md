@@ -1,6 +1,11 @@
 # Todo Application
 
-A simple and efficient Todo application built with Go and MongoDB, featuring a RESTful API and web interface.
+![Go](https://img.shields.io/badge/Go-1.21+-blue.svg)
+![MongoDB](https://img.shields.io/badge/MongoDB-Ready-green.svg)
+![API](https://img.shields.io/badge/REST_API-Advanced-orange.svg)
+![Status](https://img.shields.io/badge/Step_3-COMPLETED-brightgreen.svg)
+
+A simple and efficient Todo application built with Go and MongoDB, featuring a RESTful API with **advanced filtering, sorting, and pagination** capabilities.
 
 ## Features
 
@@ -14,6 +19,47 @@ A simple and efficient Todo application built with Go and MongoDB, featuring a R
 - ⚡ Fast and lightweight Go backend
 - 🔧 Graceful server shutdown
 - 🎯 Input validation
+
+## Screenshots
+
+### Web Interface
+![Todo App Interface](image/todo1.png)
+*Main todo application interface showing add/edit/delete functionality*
+
+![Checking Todos](image/todo2.png)
+*Checking off completed todos*
+
+![Editing Todo](image/todo3.png)
+*Editing todo items*
+
+![Updated Todo](image/todo4.png)
+*Updated todo showing changes*
+
+![Delete Confirmation](image/todo5.png)
+*Delete confirmation dialog*
+
+![Final State](image/todo6.png)
+*Final state after operations*
+
+### API Responses
+
+![Basic API Response](image/todo7.png)
+*Basic API response showing all todos with pagination metadata*
+
+#### Advanced Filtering & Sorting
+![Filtered Response](image/todo8.png)
+*API response with filtering: `?completed=false&sort_by=created_at&order=desc`*
+
+#### Pagination
+![Pagination Response](image/todo9.png)
+*API response with pagination: `?page=1&page_size=5`*
+
+![Pagination Metadata](image/todo10.png)
+*Detailed pagination metadata showing current_page, page_size, total_count, and total_pages*
+
+#### Search Functionality
+![Search Results](image/todo7.png)
+*Search functionality: `?search=work` showing filtered results*
 
 ## Prerequisites
 
@@ -185,6 +231,39 @@ GOOS=linux GOARCH=amd64 go build -o todo main.go
 ```bash
 go test ./...
 ```
+
+## Live Demo Features
+
+The screenshots above demonstrate all the advanced features in action:
+
+### ✅ **Step 2: Basic CRUD Operations**
+- **Create**: Add new todos through web interface
+- **Read**: View all todos in both web UI and JSON API  
+- **Update**: Edit todo titles and mark as completed
+- **Delete**: Remove todos with confirmation dialog
+
+### 🚀 **Step 3: Advanced Features (3+ implemented)**
+
+#### 🔍 **1. Filtering**
+- `?completed=true/false` - Filter by completion status
+- `?search=text` - Search in todo titles (case-insensitive)
+- **Example**: `?search=work` returns only todos containing "work"
+
+#### 📊 **2. Sorting** 
+- `?sort_by=title|created_at|completed` - Sort by different fields
+- `?order=asc|desc` - Ascending or descending order
+- **Example**: `?sort_by=created_at&order=desc` - Newest first
+
+#### 📄 **3. Pagination**
+- `?page=1&page_size=5` - Control page number and items per page
+- Returns metadata: `current_page`, `total_count`, `total_pages`
+- **Example**: `?page=1&page_size=5` shows first 5 todos with navigation info
+
+### 🎯 **Combined Example**
+```
+GET /todo?completed=false&sort_by=created_at&order=desc&page=1&page_size=10
+```
+*Returns first 10 incomplete todos, sorted by creation date (newest first)*
 
 ## Contributing
 
