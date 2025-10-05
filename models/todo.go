@@ -11,6 +11,7 @@ type TodoModel struct {
 	Title     string             `bson:"title"`
 	Completed bool               `bson:"completed"`
 	CreatedAt time.Time          `bson:"createAt"`
+	UserID    primitive.ObjectID `bson:"user_id,omitempty"` // New field for user association
 }
 
 type Todo struct {
@@ -18,4 +19,5 @@ type Todo struct {
 	Title     string    `json:"title"`
 	Completed bool      `json:"completed"`
 	CreatedAt time.Time `json:"created_at"`
+	UserID    string    `json:"user_id,omitempty"` // Optional in JSON response
 }

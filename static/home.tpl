@@ -147,9 +147,198 @@
         text-align: center;
         color: #6c757d;
       }
+
+      .auth-section {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        overflow: hidden;
+      }
+
+      .auth-header {
+        background: #007bff;
+        color: white;
+        padding: 15px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .auth-form {
+        padding: 20px;
+        display: none;
+      }
+
+      .auth-form.active {
+        display: block;
+      }
+
+      .form-group {
+        margin-bottom: 15px;
+      }
+
+      .form-label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #333;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #ddd;
+        border-radius: 5px;
+        font-size: 16px;
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-color: #007bff;
+      }
+
+      .btn-auth {
+        width: 100%;
+        padding: 12px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        margin-bottom: 10px;
+      }
+
+      .btn-auth:hover {
+        background: #0056b3;
+      }
+
+      .btn-secondary {
+        background: #6c757d;
+        width: 100%;
+        padding: 12px;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+
+      .btn-secondary:hover {
+        background: #545b62;
+      }
+
+      .user-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      .user-email {
+        font-size: 14px;
+        opacity: 0.9;
+      }
+
+      .btn-logout {
+        background: #dc3545;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 5px;
+        font-size: 12px;
+        cursor: pointer;
+      }
+
+      .btn-logout:hover {
+        background: #c82333;
+      }
+
+      .error-message {
+        color: #dc3545;
+        font-size: 14px;
+        margin-top: 5px;
+        display: none;
+      }
+
+      .success-message {
+        color: #28a745;
+        font-size: 14px;
+        margin-top: 5px;
+        display: none;
+      }
+
+      .auth-links {
+        text-align: center;
+        margin-top: 15px;
+      }
+
+      .auth-link {
+        color: #007bff;
+        cursor: pointer;
+        text-decoration: underline;
+        font-size: 14px;
+      }
+
+      .auth-link:hover {
+        color: #0056b3;
+      }
     </style>
   </head>
   <body>
+    <!-- Authentication Section -->
+    <div id="authSection" class="auth-section" style="max-width: 600px; margin: 0 auto;">
+      <div class="auth-header">
+        <div>
+          <span id="authTitle">Welcome! Please login or register</span>
+        </div>
+        <div id="userInfo" class="user-info" style="display: none;">
+          <span id="userEmail" class="user-email"></span>
+          <button id="logoutBtn" class="btn-logout">Logout</button>
+        </div>
+      </div>
+
+      <!-- Login Form -->
+      <div id="loginForm" class="auth-form">
+        <div class="form-group">
+          <label class="form-label">Username or Email:</label>
+          <input type="text" id="loginUsername" class="form-input" placeholder="Enter username or email">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password:</label>
+          <input type="password" id="loginPassword" class="form-input" placeholder="Enter password">
+        </div>
+        <button id="loginBtn" class="btn-auth">Login</button>
+        <div id="loginError" class="error-message"></div>
+        <div class="auth-links">
+          <span class="auth-link" onclick="showRegisterForm()">Don't have an account? Register here</span>
+        </div>
+      </div>
+
+      <!-- Register Form -->
+      <div id="registerForm" class="auth-form">
+        <div class="form-group">
+          <label class="form-label">Username:</label>
+          <input type="text" id="registerUsername" class="form-input" placeholder="Choose username">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email:</label>
+          <input type="email" id="registerEmail" class="form-input" placeholder="Enter email">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password:</label>
+          <input type="password" id="registerPassword" class="form-input" placeholder="Choose password (min 6 chars)">
+        </div>
+        <button id="registerBtn" class="btn-auth">Register</button>
+        <div id="registerError" class="error-message"></div>
+        <div id="registerSuccess" class="success-message"></div>
+        <div class="auth-links">
+          <span class="auth-link" onclick="showLoginForm()">Already have an account? Login here</span>
+        </div>
+      </div>
+    </div>
+
     <div class="container">
       <div class="header">
         <h1>Simple Todo App</h1>
@@ -181,6 +370,8 @@
     <script>
       let todos = [];
       let editingTodo = null;
+      let currentUser = null;
+      let authToken = localStorage.getItem('authToken');
       
       // DOM elements
       const todoForm = document.getElementById('todoForm');
@@ -191,8 +382,131 @@
       
       // Load todos when page loads
       document.addEventListener('DOMContentLoaded', function() {
+        initializeAuth();
         loadTodos();
       });
+
+      // Initialize authentication
+      function initializeAuth() {
+        if (authToken) {
+          // Verify token and get user info
+          fetch('/auth/profile', {
+            headers: {
+              'Authorization': 'Bearer ' + authToken
+            }
+          })
+          .then(response => {
+            if (response.ok) {
+              return response.json();
+            } else {
+              throw new Error('Invalid token');
+            }
+          })
+          .then(data => {
+            if (data.data) {
+              currentUser = data.data;
+              showAuthenticatedState();
+            } else {
+              logout();
+            }
+          })
+          .catch(() => {
+            logout();
+          });
+        } else {
+          showLoginForm();
+        }
+      }
+
+      // Show login form
+      function showLoginForm() {
+        document.getElementById('loginForm').classList.add('active');
+        document.getElementById('registerForm').classList.remove('active');
+        document.getElementById('authTitle').textContent = 'Login to Your Account';
+        document.getElementById('userInfo').style.display = 'none';
+      }
+
+      // Show register form  
+      function showRegisterForm() {
+        document.getElementById('registerForm').classList.add('active');
+        document.getElementById('loginForm').classList.remove('active');
+        document.getElementById('authTitle').textContent = 'Create New Account';
+        document.getElementById('userInfo').style.display = 'none';
+      }
+
+      // Show authenticated state
+      function showAuthenticatedState() {
+        document.getElementById('loginForm').classList.remove('active');
+        document.getElementById('registerForm').classList.remove('active');
+        document.getElementById('authTitle').textContent = 'Welcome back!';
+        document.getElementById('userInfo').style.display = 'flex';
+        document.getElementById('userEmail').textContent = currentUser.email;
+      }
+
+      // Login function
+      function login(username, password) {
+        return fetch('/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: username,
+            password: password
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error === false && data.data) {
+            authToken = data.data.token;
+            currentUser = data.data.user;
+            localStorage.setItem('authToken', authToken);
+            showAuthenticatedState();
+            loadTodos(); // Reload todos for this user
+            return true;
+          } else {
+            throw new Error(data.message || 'Login failed');
+          }
+        });
+      }
+
+      // Register function
+      function register(username, email, password) {
+        return fetch('/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: username,
+            email: email,
+            password: password
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error === false && data.data) {
+            authToken = data.data.token;
+            currentUser = data.data.user;
+            localStorage.setItem('authToken', authToken);
+            showAuthenticatedState();
+            loadTodos(); // Load todos for new user
+            return true;
+          } else {
+            throw new Error(data.message || 'Registration failed');
+          }
+        });
+      }
+
+      // Logout function
+      function logout() {
+        authToken = null;
+        currentUser = null;
+        localStorage.removeItem('authToken');
+        todos = [];
+        showLoginForm();
+        renderTodos();
+      }
       
       // Form submission
       todoForm.addEventListener('submit', function(e) {
@@ -219,7 +533,12 @@
       
       // Load todos from server
       function loadTodos() {
-        fetch('/todo')
+        const headers = {};
+        if (authToken) {
+          headers['Authorization'] = 'Bearer ' + authToken;
+        }
+
+        fetch('/todo', { headers })
           .then(response => response.json())
           .then(data => {
             todos = data.data || [];
@@ -232,11 +551,16 @@
       
       // Add new todo
       function addTodo(title) {
+        const headers = {
+          'Content-Type': 'application/json',
+        };
+        if (authToken) {
+          headers['Authorization'] = 'Bearer ' + authToken;
+        }
+
         fetch('/todo', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: headers,
           body: JSON.stringify({ title: title })
         })
         .then(response => response.json())
@@ -262,11 +586,16 @@
         const todo = todos.find(t => t.id === id);
         if (!todo) return;
         
+        const headers = {
+          'Content-Type': 'application/json',
+        };
+        if (authToken) {
+          headers['Authorization'] = 'Bearer ' + authToken;
+        }
+        
         fetch(`/todo/${id}`, {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: headers,
           body: JSON.stringify({
             id: id,
             title: title,
@@ -292,11 +621,16 @@
         const todo = todos[todoIndex];
         const newCompleted = !todo.completed;
         
+        const headers = {
+          'Content-Type': 'application/json',
+        };
+        if (authToken) {
+          headers['Authorization'] = 'Bearer ' + authToken;
+        }
+        
         fetch(`/todo/${id}`, {
           method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: headers,
           body: JSON.stringify({
             id: id,
             title: todo.title,
@@ -332,8 +666,14 @@
           return;
         }
         
+        const headers = {};
+        if (authToken) {
+          headers['Authorization'] = 'Bearer ' + authToken;
+        }
+        
         fetch(`/todo/${id}`, {
-          method: 'DELETE'
+          method: 'DELETE',
+          headers: headers
         })
         .then(response => {
           if (response.status === 200) {
@@ -386,6 +726,96 @@
           todoList.appendChild(li);
         });
       }
+
+      // Auth form event listeners
+      document.getElementById('loginBtn').addEventListener('click', function() {
+        const username = document.getElementById('loginUsername').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        const errorEl = document.getElementById('loginError');
+        
+        if (!username || !password) {
+          errorEl.textContent = 'Please fill in all fields';
+          errorEl.style.display = 'block';
+          return;
+        }
+
+        this.textContent = 'Logging in...';
+        this.disabled = true;
+        errorEl.style.display = 'none';
+
+        login(username, password)
+          .then(() => {
+            // Success - form will be hidden by showAuthenticatedState()
+          })
+          .catch(error => {
+            errorEl.textContent = error.message;
+            errorEl.style.display = 'block';
+          })
+          .finally(() => {
+            this.textContent = 'Login';
+            this.disabled = false;
+          });
+      });
+
+      document.getElementById('registerBtn').addEventListener('click', function() {
+        const username = document.getElementById('registerUsername').value.trim();
+        const email = document.getElementById('registerEmail').value.trim();
+        const password = document.getElementById('registerPassword').value;
+        const errorEl = document.getElementById('registerError');
+        const successEl = document.getElementById('registerSuccess');
+        
+        if (!username || !email || !password) {
+          errorEl.textContent = 'Please fill in all fields';
+          errorEl.style.display = 'block';
+          successEl.style.display = 'none';
+          return;
+        }
+
+        if (password.length < 6) {
+          errorEl.textContent = 'Password must be at least 6 characters';
+          errorEl.style.display = 'block';
+          successEl.style.display = 'none';
+          return;
+        }
+
+        this.textContent = 'Registering...';
+        this.disabled = true;
+        errorEl.style.display = 'none';
+        successEl.style.display = 'none';
+
+        register(username, email, password)
+          .then(() => {
+            successEl.textContent = 'Registration successful! Welcome!';
+            successEl.style.display = 'block';
+          })
+          .catch(error => {
+            errorEl.textContent = error.message;
+            errorEl.style.display = 'block';
+          })
+          .finally(() => {
+            this.textContent = 'Register';
+            this.disabled = false;
+          });
+      });
+
+      document.getElementById('logoutBtn').addEventListener('click', function() {
+        if (confirm('Are you sure you want to logout?')) {
+          logout();
+        }
+      });
+
+      // Allow Enter key to submit forms
+      document.getElementById('loginPassword').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          document.getElementById('loginBtn').click();
+        }
+      });
+
+      document.getElementById('registerPassword').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          document.getElementById('registerBtn').click();
+        }
+      });
     </script>
   </body>
 </html>

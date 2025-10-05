@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
+	"github.com/nihad/todo/auth"
 	"github.com/nihad/todo/models"
 	"github.com/nihad/todo/utils"
 	"github.com/thedevsaddam/renderer"
@@ -42,12 +43,19 @@ func (h *TodoHandler) CreateTodo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get user from context (optional - for backwards compatibility)
+	var userID primitive.ObjectID
+	if user, ok := auth.GetUserFromContext(r); ok {
+		userID = user.ID
+	}
+
 	// if input is okay, create a todo
 	tm := models.TodoModel{
 		ID:        primitive.NewObjectID(),
 		Title:     t.Title,
 		Completed: false,
 		CreatedAt: time.Now(),
+		UserID:    userID, // Will be empty ObjectID if no user
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -67,6 +75,7 @@ func (h *TodoHandler) CreateTodo(w http.ResponseWriter, r *http.Request) {
 			Title:     tm.Title,
 			Completed: tm.Completed,
 			CreatedAt: tm.CreatedAt,
+			UserID:    tm.UserID.Hex(),
 		},
 	})
 }
@@ -81,6 +90,29 @@ func (h *TodoHandler) UpdateTodo(w http.ResponseWriter, r *http.Request) {
 
 	objID, _ := utils.ObjectIDFromString(id)
 
+	// Check user ownership (if authenticated)
+	filter := bson.M{"_id": objID}
+	if user, ok := auth.GetUserFromContext(r); ok {
+		filter["user_id"] = user.ID
+	} else {
+		filter["user_id"] = bson.M{"$exists": false}
+	}
+
+	// Check if todo exists and belongs to user
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	var existingTodo models.TodoModel
+	err := h.db.Collection(collectionName).FindOne(ctx, filter).Decode(&existingTodo)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			utils.RespondWithError(h.rnd, w, http.StatusNotFound, "Todo not found or access denied")
+		} else {
+			utils.RespondWithError(h.rnd, w, http.StatusInternalServerError, "Database error")
+		}
+		return
+	}
+
 	var t models.Todo
 
 	if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
@@ -94,11 +126,8 @@ func (h *TodoHandler) UpdateTodo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
 	// if input is okay, update a todo
-	_, err := h.db.Collection(collectionName).UpdateOne(
+	_, err = h.db.Collection(collectionName).UpdateOne(
 		ctx,
 		bson.M{"_id": objID},
 		bson.M{"$set": bson.M{"title": t.Title, "completed": t.Completed}},
@@ -120,6 +149,14 @@ func (h *TodoHandler) FetchTodos(w http.ResponseWriter, r *http.Request) {
 
 	// 1. FILTERING - Build MongoDB filter
 	filter := bson.M{}
+
+	// Filter by user (if authenticated)
+	if user, ok := auth.GetUserFromContext(r); ok {
+		filter["user_id"] = user.ID
+	} else {
+		// For backwards compatibility, show todos without user_id
+		filter["user_id"] = bson.M{"$exists": false}
+	}
 
 	// Filter by completion status
 	if completed := query.Get("completed"); completed != "" {
@@ -195,6 +232,7 @@ func (h *TodoHandler) FetchTodos(w http.ResponseWriter, r *http.Request) {
 			Title:     t.Title,
 			Completed: t.Completed,
 			CreatedAt: t.CreatedAt,
+			UserID:    t.UserID.Hex(),
 		})
 	}
 
@@ -229,14 +267,26 @@ func (h *TodoHandler) DeleteTodo(w http.ResponseWriter, r *http.Request) {
 
 	objID, _ := utils.ObjectIDFromString(id)
 
+	// Build filter with user check
+	filter := bson.M{"_id": objID}
+	if user, ok := auth.GetUserFromContext(r); ok {
+		filter["user_id"] = user.ID
+	} else {
+		filter["user_id"] = bson.M{"$exists": false}
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err := h.db.Collection(collectionName).DeleteOne(ctx, bson.M{"_id": objID})
+	result, err := h.db.Collection(collectionName).DeleteOne(ctx, filter)
 	if err != nil {
 		utils.RespondWithError(h.rnd, w, http.StatusInternalServerError, "Failed to delete todo")
 		return
 	}
 
+	if result.DeletedCount == 0 {
+		utils.RespondWithError(h.rnd, w, http.StatusNotFound, "Todo not found or access denied")
+		return
+	}
 	utils.RespondWithSuccess(h.rnd, w, http.StatusOK, "Todo deleted successfully", nil)
 }

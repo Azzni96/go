@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/nihad/todo/auth"
 	"github.com/nihad/todo/routes"
 	"github.com/thedevsaddam/renderer"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -21,7 +22,7 @@ var db *mongo.Database
 
 const (
 	dbName string = "demo_todo"
-	port   string = ":9000"
+	port   string = ":9001"
 )
 
 func init() {
@@ -55,6 +56,10 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Get("/", homeHandler)
 
+	// Auth routes
+	r.Mount("/auth", auth.AuthRoutes(db, rnd))
+
+	// Todo routes (now with optional auth for backwards compatibility)
 	r.Mount("/todo", routes.TodoRoutes(db, rnd))
 
 	srv := &http.Server{
