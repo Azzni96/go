@@ -21,8 +21,15 @@ var db *mongo.Database
 
 const (
 	dbName string = "demo_todo"
-	port   string = ":9000"
 )
+
+func getPort() string {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "9000"
+	}
+	return ":" + port
+}
 
 func init() {
 	rnd = renderer.New()
@@ -57,6 +64,7 @@ func main() {
 
 	r.Mount("/todo", routes.TodoRoutes(db, rnd))
 
+	port := getPort()
 	srv := &http.Server{
 		Addr:         port,
 		Handler:      r,
@@ -66,7 +74,7 @@ func main() {
 	}
 
 	go func() {
-		log.Println(`server is running on http://localhost` + port)
+		log.Println(`server is running on port` + port)
 		if err := srv.ListenAndServe(); err != nil {
 			log.Printf("listen: %s\n", err)
 		}
